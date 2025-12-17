@@ -1,7 +1,7 @@
 /* ===== Base Styles ===== */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f5f5;
   background-attachment: fixed;
   position: absolute;
   top: 0;
@@ -47,7 +47,7 @@ button:focus {
   max-width: 900px;
   margin: 0 auto;
   background: white;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
 }
 
 .app-header {
@@ -62,7 +62,7 @@ button:focus {
   flex-direction: column;
   flex-grow: 1;
   overflow: auto;
-  background: #f8f9fa;
+  background: #f5f5f5;
   padding: 16px;
 }
 
@@ -85,10 +85,10 @@ button:focus {
 
 /* ===== Header ===== */
 header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
   padding: 20px 15px 15px 15px;
   position: relative;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .app-bar {
@@ -120,22 +120,26 @@ header {
 
 .username {
   font-weight: 600;
-  color: #667eea;
+  color: #FF6B35;
 }
 
 .logout-btn {
-  background: #ff6b6b;
+  background: #FF6B35;
   padding: 6px 12px;
   font-size: 0.9em;
 }
 
 .logout-btn:hover {
-  background: #ff5252;
+  background: #FF8C42;
 }
 
 /* ===== Stats Dashboard ===== */
 .stats-section {
   margin-bottom: 20px;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stats-dashboard {
@@ -152,17 +156,19 @@ header {
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid #FF6B35;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+  border-color: #FF8C42;
 }
 
 .stat-value {
   font-size: 2em;
   font-weight: bold;
-  color: #667eea;
+  color: #FF6B35;
   margin-bottom: 4px;
 }
 
@@ -198,7 +204,7 @@ header {
 
 .task-form>input:focus {
   outline: 0;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .task-form>.priority-select {
@@ -216,12 +222,12 @@ header {
 
 .task-form>.priority-select:focus {
   outline: 0;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .task-form>button {
   min-width: 120px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FF6B35;
 }
 
 .add-task-btn {
@@ -254,7 +260,7 @@ header {
 
 .search-input:focus {
   outline: 0;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .search-clear {
@@ -309,7 +315,7 @@ header {
 
 .filter-select:focus {
   outline: 0;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 /* ===== Tasks List ===== */
@@ -349,15 +355,15 @@ header {
 }
 
 .tasks>li.priority-high {
-  border-left: 4px solid #ff6b6b;
+  border-left: 4px solid #FF6B35;
 }
 
 .tasks>li.priority-medium {
-  border-left: 4px solid #ffd93d;
+  border-left: 4px solid #FF8C42;
 }
 
 .tasks>li.priority-low {
-  border-left: 4px solid #6bcf7f;
+  border-left: 4px solid #2d2d2d;
 }
 
 .task-content {
@@ -381,8 +387,8 @@ header {
 }
 
 .task-category {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: #FF6B35;
+  color: white;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.85em;
@@ -405,7 +411,7 @@ header {
 }
 
 .task-due-date.overdue {
-  color: #ff6b6b;
+  color: #FF6B35;
   font-weight: 600;
 }
 
@@ -421,26 +427,26 @@ header {
 }
 
 .task-actions .edit {
-  background: #4ecdc4;
+  background: #FF6B35;
 }
 
 .task-actions .edit:hover {
-  background: #45b8b0;
+  background: #FF8C42;
 }
 
 .task-actions .delete {
-  background: #ff6b6b;
+  background: #1a1a1a;
 }
 
 .task-actions .delete:hover {
-  background: #ff5252;
+  background: #2d2d2d;
 }
 
 .toggle-checked {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #FF6B35;
 }
 
 /* ===== Priority Badge ===== */
@@ -455,18 +461,18 @@ header {
 }
 
 .priority-high {
-  background: #ffebee;
-  color: #c62828;
+  background: #FF6B35;
+  color: white;
 }
 
 .priority-medium {
-  background: #fff9c4;
-  color: #f57f17;
+  background: #FF8C42;
+  color: white;
 }
 
 .priority-low {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #2d2d2d;
+  color: white;
 }
 
 .priority-icon {
@@ -502,7 +508,7 @@ header {
 
 .task-editor-form h3 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #FF6B35;
   font-size: 1.5em;
 }
 
@@ -514,7 +520,7 @@ header {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
-  color: #555;
+  color: #333;
 }
 
 .form-group input,
@@ -531,7 +537,7 @@ header {
 .form-group input:focus,
 .form-group select:focus {
   outline: 0;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .form-actions {
@@ -551,7 +557,7 @@ header {
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FF6B35;
 }
 
 /* ===== Login Form ===== */
@@ -590,12 +596,12 @@ header {
 
 .login-form>div>input:focus {
   outline: 0;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .login-form>div>button {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FF6B35;
   padding: 12px;
   margin-top: 8px;
 }
@@ -614,7 +620,7 @@ header {
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #FF6B35;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
