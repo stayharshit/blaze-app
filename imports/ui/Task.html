@@ -1,7 +1,27 @@
 <template name="task">
-    <li>
-        <input type="checkbox" checked="{{isChecked}}" class="toggle-checked" />
-        <span>{{text}}</span>
-        <button class="delete">Delete</button>
+    <li class="task-item {{#if isChecked}}task-completed{{/if}} priority-{{priority}}">
+        <input type="checkbox" checked={{isChecked}} class="toggle-checked" />
+        <div class="task-content">
+            <div class="task-main">
+                <span class="task-text">{{text}}</span>
+                {{#if category}}
+                <span class="task-category">{{category}}</span>
+                {{/if}}
+            </div>
+            <div class="task-meta">
+                {{#if priority}}
+                {{> priorityBadgeWrapper priority=priority}}
+                {{/if}}
+                {{#if dueDate}}
+                <span class="task-due-date {{#if isOverdue}}overdue{{/if}}">
+                    📅 {{formatDate dueDate}}
+                </span>
+                {{/if}}
+            </div>
+        </div>
+        <div class="task-actions">
+            <button class="edit" title="Edit task">✏️</button>
+            <button class="delete" title="Delete task">🗑️</button>
+        </div>
     </li>
 </template>

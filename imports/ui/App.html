@@ -3,10 +3,18 @@
 </body>
 
 <template name="form">
-    <form class="task-form">
-        <input type="text" name="text" placeholder="Type to add new tasks" />
-        <button type="submit">Add Task</button>
-    </form>
+    <div class="task-form-container">
+        <form class="task-form">
+            <input type="text" name="text" placeholder="Type to add new tasks" />
+            <select name="priority" class="priority-select">
+                <option value="">Select Priority</option>
+                <option value="high">High Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="low">Low Priority</option>
+            </select>
+            <button type="submit">Add Task</button>
+        </form>
+    </div>
 </template>
 
 <template name="mainContainer">
@@ -22,22 +30,46 @@
         <div class="main">
             {{#if isUserLogged}}
             <div class="user">
-                {{getUser.username}} 🚪
+                <span class="username">{{getUser.username}}</span>
+                <button class="logout-btn" title="Logout">🚪</button>
             </div>
+
+            {{#if showStats}}
+            {{> statsWrapper stats=stats}}
+            {{/if}}
+
             {{> form }}
 
-            <div class="filter">
-                <button id="hide-completed-button">
+            {{> searchWrapper onSearchCallback=handleSearchCallback}}
+
+            <div class="filter-bar">
+                <button id="hide-completed-button" class="filter-btn">
                     {{#if hideCompleted}}
-                    Show All
+                    👁️ Show All
                     {{else}}
-                    Hide Completed
+                    🙈 Hide Completed
                     {{/if}}
                 </button>
+                <button id="toggle-stats-button" class="filter-btn">
+                    {{#if showStats}}
+                    📊 Hide Stats
+                    {{else}}
+                    📊 Show Stats
+                    {{/if}}
+                </button>
+                <select id="priority-filter" class="filter-select">
+                    <option value="">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                </select>
             </div>
 
             {{#if isLoading}}
-            <div class="loading">loading...</div>
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Loading tasks...</span>
+            </div>
             {{/if}}
 
             <ul class="tasks">
@@ -45,6 +77,10 @@
                 {{> task}}
                 {{/each}}
             </ul>
+
+            {{#if showTaskEditor}}
+            {{> taskEditorWrapper task=editingTask onSave=handleTaskSave onCancel=handleTaskCancel}}
+            {{/if}}
             {{else}}
             {{> login }}
             {{/if}}

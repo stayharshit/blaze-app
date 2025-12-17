@@ -1,73 +1,156 @@
+import { Meteor } from 'meteor/meteor';
+import { Tracker } from 'meteor/tracker';
 import { Template } from 'meteor/templating';
-import { TasksCollection } from "../db/TasksCollection.js";
+import { ReactiveVar } from 'meteor/reactive-var';
+import { TasksCollection } from '../db/TasksCollection';
 import { ReactiveDict } from 'meteor/reactive-dict';
 import './App.html';
-import "./Login.js";
+import './Login.js';
 import './Task.js';
+import './StatsWrapper.js';
+import './SearchWrapper.js';
+import './TaskEditorWrapper.js';
 
-const HIDE_COMPLETED_STRING = "hideCompleted";
-const IS_LOADING_STRING = "isLoading";
+const HIDE_COMPLETED_KEY = 'hideCompleted';
+const IS_LOADING_KEY = 'isLoading';
+const SHOW_STATS_KEY = 'showStats';
+const SEARCH_TERM_KEY = 'searchTerm';
+const PRIORITY_FILTER_KEY = 'priorityFilter';
+const EDITING_TASK_KEY = 'editingTask';
+
 
 const getUser = () => Meteor.user();
-const isUserLogged = () => !!getUser();
+const getUserId = () => Meteor.userId();
+const isUserLogged = () => Boolean(getUserId());
 
-const getTasksFilter = () => {
-    const user = getUser();
-
-    const hideCompletedFilter = { isChecked: { $ne: true } };
-
-    const userFilter = user ? { userId: user._id } : {};
-
-    const pendingOnlyFilter = { ...hideCompletedFilter, ...userFilter };
-
-    return { userFilter, pendingOnlyFilter };
-}
-
-Template.mainContainer.events({
-    "click #hide-completed-button"(event, instance) {
-        const currentHideCompleted = instance.state.get(HIDE_COMPLETED_STRING);
-        instance.state.set(HIDE_COMPLETED_STRING, !currentHideCompleted);
-    },
-    'click .user'() {
-        Meteor.logout();
+const buildTasksSelector = ({ userId, hideCompleted, searchTerm, priorityFilter }) => {
+    if (!userId) {
+        return null;
     }
-});
+
+    const selector = { userId };
+
+    if (hideCompleted) {
+        selector.isChecked = { $ne: true };
+    }
+
+    if (searchTerm && searchTerm.trim()) {
+        selector.text = { $regex: searchTerm.trim(), $options: 'i' };
+    }
+
+    if (priorityFilter) {
+        selector.priority = priorityFilter;
+    }
+
+    return selector;
+};
+
+const buildIncompleteSelector = ({ userId }) => buildTasksSelector({ userId, hideCompleted: true });
+
+const getHideCompleted = (instance) => Boolean(instance.state.get(HIDE_COMPLETED_KEY));
+const getShowStats = (instance) => Boolean(instance.state.get(SHOW_STATS_KEY));
+const getSearchTerm = (instance) => {
+    // Try ReactiveVar first, then fallback to state dictionary
+    if (instance.searchTerm) {
+        return instance.searchTerm.get() || '';
+    }
+    return instance.state.get(SEARCH_TERM_KEY) || '';
+};
+const getPriorityFilter = (instance) => instance.state.get(PRIORITY_FILTER_KEY) || '';
 
 Template.mainContainer.onCreated(function mainContainerOnCreated() {
     this.state = new ReactiveDict();
+    this.stats = new ReactiveVar(null);
+    this.editingTask = new ReactiveVar(null);
+    this.showTaskEditor = new ReactiveVar(false);
+    this.searchTerm = new ReactiveVar('');
 
     const handler = Meteor.subscribe('tasks');
-    Tracker.autorun(() => {
-        this.state.set(IS_LOADING_STRING, !handler.ready());
+    this.tasksLoadingComputation = Tracker.autorun(() => {
+        this.state.set(IS_LOADING_KEY, !handler.ready());
     });
+
+    // Load stats reactively - compute directly from collection for instant updates
+    this.statsComputation = Tracker.autorun(() => {
+        const userId = getUserId();
+        if (userId && handler.ready()) {
+            // Create reactive dependencies on all task counts
+            // This ensures stats update instantly when tasks are checked/unchecked
+            const total = TasksCollection.find({ userId }).count();
+            const completed = TasksCollection.find({ userId, isChecked: true }).count();
+            const incomplete = TasksCollection.find({ userId, isChecked: { $ne: true } }).count();
+            const highPriority = TasksCollection.find({ userId, priority: 'high', isChecked: { $ne: true } }).count();
+
+            // Update stats immediately (no async call needed)
+            this.stats.set({ total, completed, incomplete, highPriority });
+        }
+    });
+});
+
+Template.mainContainer.onDestroyed(function mainContainerOnDestroyed() {
+    this.tasksLoadingComputation?.stop();
+    this.statsComputation?.stop();
+});
+
+Template.mainContainer.events({
+    'click #hide-completed-button'(event, instance) {
+        instance.state.set(HIDE_COMPLETED_KEY, !getHideCompleted(instance));
+    },
+    'click .logout-btn'(event) {
+        event.stopPropagation();
+        Meteor.logout();
+    },
+    'click #toggle-stats-button'(event, instance) {
+        instance.state.set(SHOW_STATS_KEY, !getShowStats(instance));
+    },
+    'change #priority-filter'(event, instance) {
+        const priority = event.target.value;
+        instance.state.set(PRIORITY_FILTER_KEY, priority || '');
+    },
 });
 
 Template.mainContainer.helpers({
     tasks() {
         const instance = Template.instance();
-        const hideCompleted = instance.state.get(HIDE_COMPLETED_STRING);
+        const userId = getUserId();
 
-        const { pendingOnlyFilter, userFilter } = getTasksFilter();
-
-        if (!isUserLogged()) {
+        if (!userId) {
             return [];
         }
 
-        return TasksCollection.find(hideCompleted ? pendingOnlyFilter : userFilter, {
-            sort: { createdAt: -1 },
-        }).fetch();
+        // Make this helper reactive to search term changes
+        // getSearchTerm already accesses the ReactiveVar, creating a reactive dependency
+        const searchTerm = getSearchTerm(instance);
+        const hideCompleted = getHideCompleted(instance);
+        const priorityFilter = getPriorityFilter(instance);
+
+        const selector = buildTasksSelector({
+            userId,
+            hideCompleted,
+            searchTerm,
+            priorityFilter,
+        });
+
+        if (!selector) {
+            return [];
+        }
+
+        return TasksCollection.find(selector, { sort: { createdAt: -1 } }).fetch();
     },
     hideCompleted() {
-        return Template.instance().state.get(HIDE_COMPLETED_STRING);
+        return getHideCompleted(Template.instance());
+    },
+    showStats() {
+        return getShowStats(Template.instance());
     },
     incompleteCount() {
-        if (!isUserLogged()) {
+        const userId = getUserId();
+        if (!userId) {
             return '';
         }
 
-        const { pendingOnlyFilter } = getTasksFilter();
-
-        const incompleteTasksCount = TasksCollection.find(pendingOnlyFilter).count();
+        const selector = buildIncompleteSelector({ userId });
+        const incompleteTasksCount = TasksCollection.find(selector).count();
         return incompleteTasksCount ? `(${incompleteTasksCount})` : '';
     },
     isUserLogged() {
@@ -77,24 +160,80 @@ Template.mainContainer.helpers({
         return getUser();
     },
     isLoading() {
+        return Boolean(Template.instance().state.get(IS_LOADING_KEY));
+    },
+    stats() {
+        return Template.instance().stats.get();
+    },
+    editingTask() {
+        return Template.instance().editingTask.get();
+    },
+    showTaskEditor() {
+        return Template.instance().showTaskEditor.get();
+    },
+    handleSearchCallback() {
         const instance = Template.instance();
-        return instance.state.get(IS_LOADING_STRING);
+        // Return a function that updates the search term
+        return (searchTerm) => {
+            if (instance.searchTerm) {
+                instance.searchTerm.set(searchTerm || '');
+            }
+            if (instance.state) {
+                instance.state.set(SEARCH_TERM_KEY, searchTerm || '');
+            }
+        };
+    },
+    handleTaskSave(updates) {
+        const instance = Template.instance();
+        const editingTask = instance.editingTask.get();
+
+        if (editingTask) {
+            Meteor.call('tasks.update', editingTask._id, updates, (error) => {
+                if (!error) {
+                    instance.editingTask.set(null);
+                    instance.showTaskEditor.set(false);
+                }
+            });
+        } else {
+            Meteor.call('tasks.insert', updates.text, updates.priority, updates.dueDate, updates.category, (error) => {
+                if (!error) {
+                    instance.showTaskEditor.set(false);
+                }
+            });
+        }
+    },
+    handleTaskCancel() {
+        const instance = Template.instance();
+        instance.editingTask.set(null);
+        instance.showTaskEditor.set(false);
+    },
+});
+
+Template.form.onCreated(function formOnCreated() {
+    // Store reference to main container instance
+    let parent = Template.instance().view.parentView;
+    while (parent && parent.templateInstance) {
+        const instance = parent.templateInstance();
+        if (instance && instance.showTaskEditor) {
+            this.mainInstance = instance;
+            break;
+        }
+        parent = parent.parentView;
     }
 });
 
 Template.form.events({
-    "submit .task-form"(event) {
-        // Prevent default browser form submit
+    'submit .task-form'(event) {
         event.preventDefault();
 
-        // Get value from form element
-        const target = event.target;
+        const { target } = event;
         const text = target.text.value;
+        const priority = target.priority.value || 'medium';
 
-        // Insert a task into the collection
-        Meteor.call('tasks.insert', text);
-
-        // Clear form
-        target.text.value = '';
-    }
-})
+        if (text.trim()) {
+            Meteor.call('tasks.insert', text.trim(), priority);
+            target.text.value = '';
+            target.priority.value = ''; // Reset to placeholder
+        }
+    },
+});

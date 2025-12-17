@@ -16,31 +16,49 @@ const SEED_TASKS = [
 
 const SEED_USERNAME = 'meteorite';
 const SEED_PASSWORD = 'password';
-const insertTask = (taskText, user) => TasksCollection.insertAsync({ text: taskText, userId: user._id, createdAt: new Date() });
 
-Meteor.startup(async () => {
-  let user = await Accounts.findUserByUsername(SEED_USERNAME);
+const setPassword = async (userId, password) => {
+  if (Accounts.setPasswordAsync) {
+    await Accounts.setPasswordAsync(userId, password, { logout: false });
+    return;
+  }
+
+  // Fallback for environments that still expose only the sync API.
+  Accounts.setPassword(userId, password, { logout: false });
+};
+
+const ensureSeedUser = async ({ username, password }) => {
+  let user = await Accounts.findUserByUsername(username);
 
   if (!user) {
-    const userId = await Accounts.createUser({
-      username: SEED_USERNAME,
-      password: SEED_PASSWORD,
-    });
-
-    user = await Accounts.findUserByUsername(SEED_USERNAME) ?? await Meteor.users.findOneAsync(userId);
+    const userId = await Accounts.createUser({ username, password });
+    user = (await Accounts.findUserByUsername(username)) ?? (await Meteor.users.findOneAsync(userId));
   }
 
-  // Ensure the seed user's password is always what the login form expects.
-  if (Accounts.setPasswordAsync) {
-    await Accounts.setPasswordAsync(user._id, SEED_PASSWORD, { logout: false });
-  } else {
-    Accounts.setPassword(user._id, SEED_PASSWORD, { logout: false });
+  if (!user) {
+    throw new Error(`Failed to create/find seed user "${username}"`);
   }
 
-  const cursor = TasksCollection.find();
-  const existingCount = await cursor.countAsync();
+  await setPassword(user._id, password);
+  return user;
+};
 
-  if (existingCount === 0) {
-    await Promise.all(SEED_TASKS.map(taskText => insertTask(taskText, user)));
-  }
+const createSeedTaskDoc = ({ text, userId }) => ({
+  text,
+  userId,
+  createdAt: new Date(),
+});
+
+const seedTasksIfEmpty = async ({ userId }) => {
+  const existingCount = await TasksCollection.find().countAsync();
+  if (existingCount !== 0) return;
+
+  await Promise.all(
+    SEED_TASKS.map((text) => TasksCollection.insertAsync(createSeedTaskDoc({ text, userId }))),
+  );
+};
+
+Meteor.startup(async () => {
+  const user = await ensureSeedUser({ username: SEED_USERNAME, password: SEED_PASSWORD });
+  await seedTasksIfEmpty({ userId: user._id });
 });
