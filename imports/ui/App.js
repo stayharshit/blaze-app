@@ -183,29 +183,40 @@ Template.mainContainer.helpers({
             }
         };
     },
-    handleTaskSave(updates) {
+    handleTaskSave() {
         const instance = Template.instance();
-        const editingTask = instance.editingTask.get();
+        // Return a function that will be called by the React component
+        return (updates) => {
+            // Safety check: ensure updates is an object
+            if (!updates || typeof updates !== 'object') {
+                return;
+            }
 
-        if (editingTask) {
-            Meteor.call('tasks.update', editingTask._id, updates, (error) => {
-                if (!error) {
-                    instance.editingTask.set(null);
-                    instance.showTaskEditor.set(false);
-                }
-            });
-        } else {
-            Meteor.call('tasks.insert', updates.text, updates.priority, updates.dueDate, updates.category, (error) => {
-                if (!error) {
-                    instance.showTaskEditor.set(false);
-                }
-            });
-        }
+            const editingTask = instance.editingTask.get();
+
+            if (editingTask) {
+                Meteor.call('tasks.update', editingTask._id, updates, (error) => {
+                    if (!error) {
+                        instance.editingTask.set(null);
+                        instance.showTaskEditor.set(false);
+                    }
+                });
+            } else {
+                Meteor.call('tasks.insert', updates.text, updates.priority, (error) => {
+                    if (!error) {
+                        instance.showTaskEditor.set(false);
+                    }
+                });
+            }
+        };
     },
     handleTaskCancel() {
         const instance = Template.instance();
-        instance.editingTask.set(null);
-        instance.showTaskEditor.set(false);
+        // Return a function that will be called by the React component
+        return () => {
+            instance.editingTask.set(null);
+            instance.showTaskEditor.set(false);
+        };
     },
 });
 

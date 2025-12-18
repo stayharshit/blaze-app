@@ -3,32 +3,35 @@ import React, { useState, useEffect } from 'react';
 const TaskEditor = ({ task, onSave, onCancel }) => {
   const [text, setText] = useState(task?.text || '');
   const [priority, setPriority] = useState(task?.priority || 'medium');
-  const [dueDate, setDueDate] = useState(task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
-  const [category, setCategory] = useState(task?.category || '');
 
   useEffect(() => {
     if (task) {
       setText(task.text || '');
       setPriority(task.priority || 'medium');
-      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
-      setCategory(task.category || '');
     }
   }, [task]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (text.trim()) {
-      onSave({
-        text: text.trim(),
-        priority,
-        dueDate: dueDate || null,
-        category: category.trim() || null,
-      });
+    if (!text.trim()) {
+      return;
     }
+
+    if (!onSave || typeof onSave !== 'function') {
+      return;
+    }
+
+    onSave({
+      text: text.trim(),
+      priority,
+    });
   };
 
+  // Ensure callbacks are functions
+  const handleCancel = onCancel && typeof onCancel === 'function' ? onCancel : () => { };
+
   return (
-    <div className="task-editor-overlay" onClick={onCancel}>
+    <div className="task-editor-overlay" onClick={handleCancel}>
       <div className="task-editor-modal" onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit} className="task-editor-form">
           <h3>{task ? 'Edit Task' : 'New Task'}</h3>
@@ -54,27 +57,8 @@ const TaskEditor = ({ task, onSave, onCancel }) => {
             </select>
           </div>
 
-          <div className="form-group">
-            <label>Due Date</label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Category</label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g., Work, Personal"
-            />
-          </div>
-
           <div className="form-actions">
-            <button type="button" onClick={onCancel} className="btn-cancel">
+            <button type="button" onClick={handleCancel} className="btn-cancel">
               Cancel
             </button>
             <button type="submit" className="btn-save">
