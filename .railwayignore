@@ -1,0 +1,14 @@
+node_modules
+.meteor/local
+.git
+.gitignore
+README.md
+.env
+.env.local
+*.log
+.DS_Store
+coverage
+.nyc_output
+tests
+docker-compose.yml
+DEPLOYMENT.md
