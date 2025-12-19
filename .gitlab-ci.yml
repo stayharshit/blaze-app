@@ -8,6 +8,8 @@ deploy_to_railway:
   only:
     - main
   script:
+    - echo "TOKEN length: ${#RAILWAY_TOKEN}"
+    - echo "PROJECT_ID length: ${#RAILWAY_PROJECT_ID}"
     - npm install -g @railway/cli
     - railway link --project $RAILWAY_PROJECT_ID
     - railway up
