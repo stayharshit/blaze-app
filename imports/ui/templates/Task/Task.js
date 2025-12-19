@@ -1,7 +1,9 @@
 import { Meteor } from 'meteor/meteor';
 import { Template } from 'meteor/templating';
+import { ReactiveVar } from 'meteor/reactive-var';
+import { formatDate, isTaskOverdue } from '../../../lib/utils/tasks';
+import '../../wrappers/PriorityBadgeWrapper';
 import './Task.html';
-import './PriorityBadgeWrapper.js';
 
 Template.task.onCreated(function taskOnCreated() {
     this.editing = new ReactiveVar(false);
@@ -35,23 +37,10 @@ Template.task.onCreated(function taskOnCreated() {
 
 Template.task.helpers({
     formatDate(date) {
-        if (!date) return '';
-        const d = new Date(date);
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        if (d.toDateString() === today.toDateString()) {
-            return 'Today';
-        }
-        if (d.toDateString() === tomorrow.toDateString()) {
-            return 'Tomorrow';
-        }
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return formatDate(date);
     },
     isOverdue() {
-        if (!this.dueDate || this.isChecked) return false;
-        return new Date(this.dueDate) < new Date();
+        return isTaskOverdue(this);
     },
     isEditing() {
         return Template.instance().editing.get();

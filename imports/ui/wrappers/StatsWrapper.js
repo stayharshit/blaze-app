@@ -1,5 +1,5 @@
 import { Template } from 'meteor/templating';
-import StatsDashboard from './components/StatsDashboard.jsx';
+import StatsDashboard from '../components/StatsDashboard';
 import './StatsWrapper.html';
 
 Template.statsWrapper.helpers({
@@ -7,4 +7,3 @@ Template.statsWrapper.helpers({
         return StatsDashboard;
     },
 });
-

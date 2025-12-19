@@ -1,10 +1,9 @@
 import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
-import SearchBar from './components/SearchBar.jsx';
+import { ReactiveDict } from 'meteor/reactive-dict';
+import SearchBar from '../components/SearchBar';
 import './SearchWrapper.html';
 
-// Import the shared search term variable from App.js
-// We'll access it through the parent template instance
 Template.searchWrapper.helpers({
     SearchBar() {
         return SearchBar;
@@ -32,4 +31,3 @@ Template.searchWrapper.helpers({
         return () => { }; // No-op fallback
     },
 });
-

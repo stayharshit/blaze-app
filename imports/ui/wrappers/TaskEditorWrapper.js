@@ -1,5 +1,5 @@
 import { Template } from 'meteor/templating';
-import TaskEditor from './components/TaskEditor.jsx';
+import TaskEditor from '../components/TaskEditor';
 import './TaskEditorWrapper.html';
 
 Template.taskEditorWrapper.onCreated(function taskEditorWrapperOnCreated() {
@@ -20,7 +20,6 @@ Template.taskEditorWrapper.onCreated(function taskEditorWrapperOnCreated() {
     } else {
         this.onCancelCallback = typeof data.onCancel === 'function' ? data.onCancel : (() => { });
     }
-
 });
 
 Template.taskEditorWrapper.helpers({
@@ -40,4 +39,3 @@ Template.taskEditorWrapper.helpers({
         return callback || (() => { });
     },
 });
-

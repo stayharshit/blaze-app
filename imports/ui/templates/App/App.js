@@ -2,51 +2,27 @@ import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
-import { TasksCollection } from '../db/TasksCollection';
 import { ReactiveDict } from 'meteor/reactive-dict';
+import { TasksCollection } from '../../../db/collections/TasksCollection';
+import { getUser, getUserId, isUserLogged } from '../../../lib/utils/auth';
+import { buildTasksSelector, buildIncompleteSelector } from '../../../lib/utils/tasks';
 import './App.html';
-import './Login.js';
-import './Task.js';
-import './StatsWrapper.js';
-import './SearchWrapper.js';
-import './TaskEditorWrapper.js';
+// Import other templates
+import '../Login/Login';
+import '../Task/Task';
+// Import wrappers
+import '../../wrappers/StatsWrapper';
+import '../../wrappers/SearchWrapper';
+import '../../wrappers/TaskEditorWrapper';
 
+// Template state keys
 const HIDE_COMPLETED_KEY = 'hideCompleted';
 const IS_LOADING_KEY = 'isLoading';
 const SHOW_STATS_KEY = 'showStats';
 const SEARCH_TERM_KEY = 'searchTerm';
 const PRIORITY_FILTER_KEY = 'priorityFilter';
-const EDITING_TASK_KEY = 'editingTask';
 
-
-const getUser = () => Meteor.user();
-const getUserId = () => Meteor.userId();
-const isUserLogged = () => Boolean(getUserId());
-
-const buildTasksSelector = ({ userId, hideCompleted, searchTerm, priorityFilter }) => {
-    if (!userId) {
-        return null;
-    }
-
-    const selector = { userId };
-
-    if (hideCompleted) {
-        selector.isChecked = { $ne: true };
-    }
-
-    if (searchTerm && searchTerm.trim()) {
-        selector.text = { $regex: searchTerm.trim(), $options: 'i' };
-    }
-
-    if (priorityFilter) {
-        selector.priority = priorityFilter;
-    }
-
-    return selector;
-};
-
-const buildIncompleteSelector = ({ userId }) => buildTasksSelector({ userId, hideCompleted: true });
-
+// Helper functions for template instance state
 const getHideCompleted = (instance) => Boolean(instance.state.get(HIDE_COMPLETED_KEY));
 const getShowStats = (instance) => Boolean(instance.state.get(SHOW_STATS_KEY));
 const getSearchTerm = (instance) => {
@@ -154,10 +130,12 @@ Template.mainContainer.helpers({
         return incompleteTasksCount ? `(${incompleteTasksCount})` : '';
     },
     isUserLogged() {
-        return isUserLogged();
+        // Explicitly access Meteor.userId() to create reactive dependency
+        return Boolean(Meteor.userId());
     },
     getUser() {
-        return getUser();
+        // Explicitly access Meteor.user() to create reactive dependency
+        return Meteor.user();
     },
     isLoading() {
         return Boolean(Template.instance().state.get(IS_LOADING_KEY));
