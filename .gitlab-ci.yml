@@ -9,6 +9,6 @@ deploy_to_railway:
     - main
   script:
     - npm install -g @railway/cli
-    - railway login $RAILWAY_TOKEN
+    - railway login --token $RAILWAY_TOKEN
     - railway link $RAILWAY_PROJECT_ID
-    - railway up --service
+    - railway up
